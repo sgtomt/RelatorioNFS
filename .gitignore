@@ -1,55 +1,36 @@
-# Prerequisites
-*.d
+## [ Visual Studio ]
+.vs/
+[Bb]in/
+[Ob]j/
+*.user
+*.userosscache
+*.sln.docstates
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+## [ .NET ]
+project.lock.json
+project.fragment.lock.json
+artifacts/
+publish/
 
-# Linker output
-*.ilk
-*.map
-*.exp
+## [ Secrets & Configs ]
+# Não suba senhas reais para o GitHub! 
+# Seus arquivos de configuração com dados sensíveis:
+appsettings.Development.json
+appsettings.Local.json
 
-# Precompiled Headers
-*.gch
-*.pch
+## [ Visual Studio Code ]
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+## [ OS e Logs ]
+*.log
+.DS_Store
+Thumbs.db
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# debug information files
-*.dwo
+## [ ClosedXML / Arquivos Temporários ]
+*.tmp
+*.xlsx
+# Ignora arquivos gerados de teste, mas não a pasta de modelos se você tiver uma
