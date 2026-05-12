@@ -1,15 +1,21 @@
 # Estágio de Build
 FROM ://microsoft.com AS build
-WORKDIR /app
+WORKDIR /src
+
+# Copia os arquivos e restaura as dependências
+COPY ["nf_app_v2.csproj", "./"]
+RUN dotnet restore "nf_app_v2.csproj"
+
+# Copia o resto e compila
 COPY . .
-RUN dotnet publish -c Release -o out
+RUN dotnet publish "nf_app_v2.csproj" -c Release -o /app/publish
 
 # Estágio de Execução
 FROM ://microsoft.com
 WORKDIR /app
-COPY --from=build /app/out .
+COPY --from=build /app/publish .
 
-# Configuração para porta dinâmica (necessário para Render/Railway)
+# Define a porta que a maioria dos serviços gratuitos usa
 ENV ASPNETCORE_URLS=http://+:10000
 EXPOSE 10000
 
