@@ -13,22 +13,37 @@
         <div class="card-body p-4">
             <!-- Dropzone Visual -->
             <div class="upload-container position-relative p-5 text-center rounded mb-4">
+
+                <!-- InputFile SEMPRE presente -->
                 <InputFile OnChange="CarregarArquivos"
                            class="position-absolute w-100 h-100 top-0 start-0 opacity-0"
                            style="cursor: pointer;"
                            multiple accept=".xml" />
 
-                <i class="bi bi-cloud-arrow-up upload-icon"></i>
-                <h4 class="mt-3">Arraste seus XMLs ou Clique aqui</h4>
-                <p class="text-muted small">Suporta múltiplos arquivos (NFe/CTe)</p>
+                @if (carregandoArquivos)
+                {
+                    <!-- Overlay por cima -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white bg-opacity-75">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <p class="fw-bold">Lendo arquivos... aguarde.</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- Conteúdo normal -->
+                    <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                    <h4 class="mt-3">Arraste seus XMLs ou Clique aqui</h4>
+                    <p class="text-muted small">Suporta múltiplos arquivos</p>
+                }
+
             </div>
 
-            @if (arquivosSelecionados.Any())
+            @if (arquivosProntos.Any())
             {
                 <div class="row align-items-center mb-3">
                     <div class="col">
                         <h6 class="mb-0 text-secondary">
-                            <i class="bi bi-list-check me-2"></i>@arquivosSelecionados.Count arquivos na fila
+                            <i class="bi bi-list-check me-2"></i>@arquivosProntos.Count arquivos na fila
                         </h6>
                     </div>
                     <div class="col-auto">
@@ -39,13 +54,13 @@
                 </div>
 
                 <div class="file-list border shadow-sm p-2 mb-4">
-                    @foreach (var arquivo in arquivosSelecionados)
+                    @foreach (var arquivo in arquivosProntos)
                     {
                         <div class="d-flex align-items-center p-2 border-bottom last-child-border-0">
                             <i class="bi bi-filetype-xml text-primary fs-4 me-3"></i>
                             <div class="flex-grow-1">
-                                <div class="text-truncate" style="max-width: 400px; font-weight: 500;">@arquivo.Name</div>
-                                <small class="text-muted">@((arquivo.Size / 1024.0).ToString("N1")) KB</small>
+                                <div class="text-truncate" style="max-width: 400px; font-weight: 500;">@arquivo.Nome</div>
+                                <small class="text-muted">@((arquivo.Tamanho / 1024.0).ToString("N1")) KB</small>
                             </div>
                             <i class="bi bi-check-circle-fill text-success ms-2"></i>
                         </div>
@@ -120,17 +135,59 @@
 @inject IJSRuntime JS
 @inject RelatorioService RelatorioService
 @code {
-    private bool estaProcessando = false;
-    private readonly List<IBrowserFile> arquivosSelecionados = new();
-    private void CarregarArquivos(InputFileChangeEventArgs e)
+    public class ArquivoParaProcessar
     {
-        foreach(var arquivo in e.GetMultipleFiles())
+        public string Nome { get; set; }
+        public byte[] Conteudo { get; set; }
+        public long Tamanho { get; set; }
+    }
+
+    // Mude sua lista para:
+    private List<ArquivoParaProcessar> arquivosProntos = new();
+    private bool carregandoArquivos = false;
+
+    private bool estaProcessando = false;
+    private async Task CarregarArquivos(InputFileChangeEventArgs e)
+    {
+        try
         {
-            arquivosSelecionados.Add(arquivo);
+            carregandoArquivos = true;
+            StateHasChanged();
+
+            // 1. Captura a lista de uma vez só (sem await aqui)
+            var arquivosEnviados = e.GetMultipleFiles(1000).ToList();
+
+            foreach (var arquivo in arquivosEnviados)
+            {
+                // 2. Cria o buffer e lê o arquivo IMEDIATAMENTE
+                // O segredo é não deixar o loop 'respirar' antes de abrir o stream
+                using var stream = arquivo.OpenReadStream(10 * 1024 * 1024);
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+
+                arquivosProntos.Add(new ArquivoParaProcessar
+                    {
+                        Nome = arquivo.Name,
+                        Conteudo = ms.ToArray(),
+                        Tamanho = arquivo.Size
+                    });
+
+                // 3. Só atualiza a tela DEPOIS que o arquivo já virou byte[]
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", "Erro ao carregar arquivos: " + ex.Message);
+        }
+        finally
+        {
+            carregandoArquivos = false;
+            StateHasChanged();
         }
     }
 
-    private void Limpar() => arquivosSelecionados.Clear();
+    private void Limpar() => arquivosProntos.Clear();
 
     private async Task ProcessarRelatorio()
     {
@@ -139,7 +196,7 @@
         {
             estaProcessando = true;
             StateHasChanged();
-            byte[] arquivofinal = await RelatorioService.GerarRelatorioAsync(arquivosSelecionados);
+            byte[] arquivofinal = await RelatorioService.GerarRelatorioAsync(arquivosProntos);
             var fileStream = new MemoryStream(arquivofinal);
             var fileName = $"Relatorio_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
 
