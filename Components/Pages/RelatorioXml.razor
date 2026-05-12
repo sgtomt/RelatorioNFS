@@ -1,0 +1,139 @@
+﻿@page "/relatorio-xml"
+@rendermode InteractiveServer
+@using nf_app_v2.Services
+
+<div class="container py-5">
+    <div class="card main-card shadow">
+        <div class="card-header header-custom py-3">
+            <h5 class="text-white mb-0 font-weight-bold">
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Gerador de Relatório XML
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <!-- Dropzone Visual -->
+            <div class="upload-container position-relative p-5 text-center rounded mb-4">
+                <InputFile OnChange="CarregarArquivos"
+                           class="position-absolute w-100 h-100 top-0 start-0 opacity-0"
+                           style="cursor: pointer;"
+                           multiple accept=".xml" />
+
+                <i class="bi bi-cloud-arrow-up upload-icon"></i>
+                <h4 class="mt-3">Arraste seus XMLs ou Clique aqui</h4>
+                <p class="text-muted small">Suporta múltiplos arquivos (NFe/CTe)</p>
+            </div>
+
+            @if (arquivosSelecionados.Any())
+            {
+                <div class="row align-items-center mb-3">
+                    <div class="col">
+                        <h6 class="mb-0 text-secondary">
+                            <i class="bi bi-list-check me-2"></i>@arquivosSelecionados.Count arquivos na fila
+                        </h6>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-sm btn-link text-danger text-decoration-none" @onclick="Limpar">
+                            <i class="bi bi-trash"></i> Limpar tudo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="file-list border shadow-sm p-2 mb-4">
+                    @foreach (var arquivo in arquivosSelecionados)
+                    {
+                        <div class="d-flex align-items-center p-2 border-bottom last-child-border-0">
+                            <i class="bi bi-filetype-xml text-primary fs-4 me-3"></i>
+                            <div class="flex-grow-1">
+                                <div class="text-truncate" style="max-width: 400px; font-weight: 500;">@arquivo.Name</div>
+                                <small class="text-muted">@((arquivo.Size / 1024.0).ToString("N1")) KB</small>
+                            </div>
+                            <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-grid shadow-sm">
+                    <button class="btn btn-success btn-lg py-3 fw-bold" @onclick="ProcessarRelatorio">
+                        <i class="bi bi-file-earmark-arrow-down-fill me-2"></i>GERAR EXCEL AGORA
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+
+    /* Área de Upload Estilizada */
+    .upload-container {
+        border: 2px dashed #0d6efd;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .upload-container:hover {
+            background-color: #e9ecef;
+            border-color: #0a58ca;
+        }
+
+    /* Ícone grande para dar contexto */
+    .upload-icon {
+        font-size: 3rem;
+        color: #0d6efd;
+        opacity: 0.6;
+    }
+
+    /* Lista de Arquivos com Scroll elegante */
+    .file-list {
+        max-height: 250px;
+        overflow-y: auto;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    /* Card Principal */
+    .main-card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .header-custom {
+        background: linear-gradient(90deg, #0d6efd 0%, #0a58ca 100%);
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+</style>
+
+@inject IJSRuntime JS
+@inject RelatorioService RelatorioService
+@code {
+    private readonly List<IBrowserFile> arquivosSelecionados = new();
+    private void CarregarArquivos(InputFileChangeEventArgs e)
+    {
+        foreach(var arquivo in e.GetMultipleFiles())
+        {
+            arquivosSelecionados.Add(arquivo);
+        }
+    }
+
+    private void Limpar() => arquivosSelecionados.Clear();
+
+    private async Task ProcessarRelatorio()
+    {
+        try
+        {
+            byte[] arquivofinal = await RelatorioService.GerarRelatorioAsync(arquivosSelecionados);
+            var fileStream = new MemoryStream(arquivofinal);
+            var fileName = $"Relatorio_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            using var streamRef = new DotNetStreamReference(stream: fileStream);
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        } 
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Erro ao processar os arquivos: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "Ocorreu um erro ao processar os arquivos. Verifique o console para mais detalhes.");
+        }
+    }
+}

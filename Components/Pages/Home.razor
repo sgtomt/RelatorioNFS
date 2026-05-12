@@ -1,0 +1,75 @@
+﻿@page "/"
+
+<PageTitle>Início - NF App</PageTitle>
+
+<div class="container py-5">
+    <!-- Boas-vindas -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">Bem-vindo ao NF App v2</h1>
+        <p class="lead text-secondary">Siga os passos abaixo para gerar seu relatório de notas fiscais em segundos.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Passo 1 -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 text-center p-4">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-3 mx-auto mb-3" style="width: 80px;">
+                    <i class="bi bi-folder-plus fs-1 text-primary"></i>
+                </div>
+                <h5>1. Selecione os XMLs</h5>
+                <p class="text-muted">Vá na aba <b>Relatório XML</b> e clique na área de upload para selecionar os arquivos das suas notas.</p>
+            </div>
+        </div>
+
+        <!-- Passo 2 -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 text-center p-4">
+                <div class="rounded-circle bg-success bg-opacity-10 p-3 mx-auto mb-3" style="width: 80px;">
+                    <i class="bi bi-gear-wide-connected fs-1 text-success"></i>
+                </div>
+                <h5>2. Processamento</h5>
+                <p class="text-muted">O sistema fará a leitura automática dos campos de emissor, valores e datas de cada arquivo.</p>
+            </div>
+        </div>
+
+        <!-- Passo 3 -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 text-center p-4">
+                <div class="rounded-circle bg-info bg-opacity-10 p-3 mx-auto mb-3" style="width: 80px;">
+                    <i class="bi bi-file-earmark-excel fs-1 text-info"></i>
+                </div>
+                <h5>3. Baixe o Excel</h5>
+                <p class="text-muted">Clique no botão gerar para receber uma planilha formatada e pronta para o uso financeiro.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chamada para Ação -->
+    <div class="mt-5 p-5 bg-dark text-white rounded-4 shadow-lg text-center">
+        <h2 class="mb-3">Pronto para começar?</h2>
+        <p class="mb-4 opacity-75">Não há limite de arquivos. Carregue quantos XMLs precisar de uma só vez.</p>
+        <a href="relatorio-xml" class="btn btn-primary btn-lg px-5 py-3 fw-bold shadow">
+            Ir para Gerador de Relatório <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+    </div>
+
+    <!-- Dica de Rodapé -->
+    <div class="text-center mt-4">
+        <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Dica: Você também pode <b>arrastar e soltar</b> os arquivos diretamente na tela de relatório.
+        </small>
+    </div>
+</div>
+
+<style>
+    /* Pequena animação de hover nos cards */
+    .card {
+        transition: transform 0.3s ease, shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+</style>
