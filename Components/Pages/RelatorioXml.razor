@@ -1,4 +1,4 @@
-﻿@page "/relatorio-xml"
+@page "/relatorio-xml"
 @rendermode InteractiveServer
 @using nf_app_v2.Services
 
@@ -6,7 +6,7 @@
     <div class="card main-card shadow">
         <div class="card-header header-custom py-3">
             <h5 class="text-white mb-0 font-weight-bold">
-                <i class="bi bi-file-earmark-spreadsheet me-2"></i>Gerador de Relatório XML
+                <i class="bi bi-file-earmark-spreadsheet me-2"></i>DocMiner
             </h5>
         </div>
 
@@ -53,8 +53,20 @@
                 </div>
 
                 <div class="d-grid shadow-sm">
-                    <button class="btn btn-success btn-lg py-3 fw-bold" @onclick="ProcessarRelatorio">
-                        <i class="bi bi-file-earmark-arrow-down-fill me-2"></i>GERAR EXCEL AGORA
+                    <button class="btn btn-success btn-lg py-3 fw-bold w-100"
+                            @onclick="ProcessarRelatorio"
+                            disabled="@estaProcessando">
+
+                        @if (estaProcessando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Processando XMLs...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-file-earmark-arrow-down-fill me-2"></i>
+                            <span>GERAR EXCEL AGORA</span>
+                        }
                     </button>
                 </div>
             }
@@ -108,6 +120,7 @@
 @inject IJSRuntime JS
 @inject RelatorioService RelatorioService
 @code {
+    private bool estaProcessando = false;
     private readonly List<IBrowserFile> arquivosSelecionados = new();
     private void CarregarArquivos(InputFileChangeEventArgs e)
     {
@@ -121,8 +134,11 @@
 
     private async Task ProcessarRelatorio()
     {
+        if (estaProcessando) return;
         try
         {
+            estaProcessando = true;
+            StateHasChanged();
             byte[] arquivofinal = await RelatorioService.GerarRelatorioAsync(arquivosSelecionados);
             var fileStream = new MemoryStream(arquivofinal);
             var fileName = $"Relatorio_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
@@ -134,6 +150,11 @@
         {
             Console.Error.WriteLine($"Erro ao processar os arquivos: {ex.Message}");
             await JS.InvokeVoidAsync("alert", "Ocorreu um erro ao processar os arquivos. Verifique o console para mais detalhes.");
+        }
+        finally
+        {
+            estaProcessando = false;
+            StateHasChanged();
         }
     }
 }
