@@ -1,14 +1,15 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Components.Forms;
 using nf_app_v2.Models;
 using System.Globalization;
 using System.Xml.Linq;
+using static nf_app_v2.Components.Pages.RelatorioXml;
 
 namespace nf_app_v2.Services
 {
     public class RelatorioService
     {
-        public async Task<byte[]> GerarRelatorioAsync(List<IBrowserFile> arquivos)
+        public async Task<byte[]> GerarRelatorioAsync(List<ArquivoParaProcessar> arquivos)
         {
             List<RegistroXml> registros = new List<RegistroXml>();
             foreach (var arquivo in arquivos)
@@ -20,15 +21,10 @@ namespace nf_app_v2.Services
             return GerarExcel(registros);
         }
 
-        private async Task<RegistroXml> ObterDadosXml(IBrowserFile arquivo)
+        private async Task<RegistroXml> ObterDadosXml(ArquivoParaProcessar arquivo)
         {
-            // 1. Defina um limite maior (ex: 10MB)
-            // 2. Copie para um MemoryStream IMEDIATAMENTE para não perder a conexão com o navegador
-            using var stream = arquivo.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-            ms.Position = 0; // Volta para o início para o XDocument ler
-
+            using var ms = new MemoryStream(arquivo.Conteudo);
+            ms.Position = 0;
             var doc = await XDocument.LoadAsync(ms, System.Xml.Linq.LoadOptions.None, CancellationToken.None);
             XNamespace ns = "http://www.portalfiscal.inf.br/nfe";
 
@@ -47,7 +43,7 @@ namespace nf_app_v2.Services
 
             var registro = new RegistroXml
             {
-                NomeArquivo = arquivo.Name,
+                NomeArquivo = arquivo.Nome,
                 NumeroNota = nFat,
                 DataEmissao = dhEmi,
                 RazaoSocial = nome,
